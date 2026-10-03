@@ -7,17 +7,21 @@ agent, registries, memory, and workers stay consistent across the API.
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from app.config import Settings
 from app.logging_config import get_logger
 from core.agent import Agent
+from core.event_bus import EventBus
+from core.notifications import NotificationCenter
 from core.planner import Planner
 from core.router import ModelRouter
 from core.verifier import Verifier
 from memory.manager import MemoryManager
 from security.permissions import PermissionManager
-from skills.builtin import builtin_skills
+from skills.discovery import build_skill_registry
+from skills.engine import SkillEngine
 from skills.registry import SkillRegistry
 from storage.sqlite_store import SQLiteDocumentStore
 from tools.builtin import builtin_tools
@@ -40,6 +44,11 @@ DEFAULT_CAPABILITIES = (
     "skills.execute",
     "memory.write",
     "memory.read",
+    "network.fetch",
+    "notify.send",
+    "scheduler.manage",
+    "system.read",
+    "hardware.access",
 )
 
 DEFAULT_ACTORS = ("user", "inzo-agent")
@@ -63,7 +72,7 @@ def get_permission_manager() -> PermissionManager:
     pm = _singletons.get("permissions")
     if pm is None:
         pm = PermissionManager()
-        for actor in DEFAULT_ACTORS:
+        for actor in (*DEFAULT_ACTORS, "api"):
             for capability in DEFAULT_CAPABILITIES:
                 pm.grant(actor, capability)
         _singletons["permissions"] = pm
@@ -100,9 +109,7 @@ def get_tool_registry() -> ToolRegistry:
 def get_skill_registry() -> SkillRegistry:
     registry = _singletons.get("skills")
     if registry is None:
-        registry = SkillRegistry()
-        for skill in builtin_skills():
-            registry.register(skill)
+        registry = build_skill_registry()
         _singletons["skills"] = registry
     return registry
 
@@ -170,3 +177,39 @@ def get_scheduler() -> Scheduler:
         scheduler = Scheduler()
         _singletons["scheduler"] = scheduler
     return scheduler
+
+
+def get_event_bus() -> EventBus:
+    bus = _singletons.get("event_bus")
+    if bus is None:
+        bus = EventBus()
+        _singletons["event_bus"] = bus
+    return bus
+
+
+def get_notification_center() -> NotificationCenter:
+    center = _singletons.get("notifications")
+    if center is None:
+        settings = get_settings()
+        center = NotificationCenter(
+            settings.data_dir, webhook_url=os.environ.get("INZO_WEBHOOK_URL")
+        )
+        _singletons["notifications"] = center
+    return center
+
+
+def get_skill_engine() -> SkillEngine:
+    engine = _singletons.get("skill_engine")
+    if engine is None:
+        engine = SkillEngine(
+            registry=get_skill_registry(),
+            permissions=get_permission_manager(),
+            memory=get_memory_manager(),
+            tools=get_tool_registry(),
+            data_dir=get_settings().data_dir,
+            scheduler=get_scheduler(),
+            notifications=get_notification_center(),
+            event_bus=get_event_bus(),
+        )
+        _singletons["skill_engine"] = engine
+    return engine

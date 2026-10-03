@@ -9,7 +9,7 @@ import uvicorn
 from fastapi import FastAPI
 
 from app import dependencies
-from app.api import chat, health, memory, settings, skills, status, tasks, tools, voice
+from app.api import chat, daemon, health, memory, settings, skills, status, tasks, tools, voice
 from app.config import Settings
 from app.logging_config import get_logger, setup_logging
 from inzo import __version__
@@ -46,6 +46,7 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
     app.include_router(skills.router)
     app.include_router(tools.router)
     app.include_router(settings.router)
+    app.include_router(daemon.router)
     return app
 
 
