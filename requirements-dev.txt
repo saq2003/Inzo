@@ -1,0 +1,6 @@
+# INZO development dependencies (pinned 2026-10-03).
+-r requirements.txt
+httpx==0.28.1
+pytest==9.1.1
+ruff==0.16.10
+mypy==2.4.0

@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Secrets — Rule 14: keep secrets outside Git.
+.env
+*.pem
+*.key
+
+# Local runtime data
+data/*.db
+data/*.sqlite*
+
+# Tooling caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.hypothesis/
+
+# Editors
+.vscode/
+.idea/
+*.swp

@@ -1,0 +1,4 @@
+# INZO runtime dependencies (pinned 2026-10-03; refresh with `pip index versions <pkg>`).
+fastapi==0.142.2
+pydantic==2.13.5
+uvicorn==0.54.0
